@@ -100,8 +100,8 @@ public class Controller {
 				checkerBoard.add(grid[row][col], col, row);
 			}
 		}
-		whitePlayer.setText(stateIsHuman[WHITE] ? "Human" : "Computer");
-		blackPlayer.setText(stateIsHuman[BLACK] ? "Human" : "Computer");
+		whitePlayer.setText(isAi ? "Computer" : "Human");
+		blackPlayer.setText("Human");
 		new Thread(()->{
 			while (true) {
 				Platform.runLater(this::displayState);

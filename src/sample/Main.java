@@ -12,6 +12,9 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.Random;
 
+import static sample.Ai.*;
+import static sample.Ai.getCol;
+
 public class Main extends Application {
 	private static Stage gameWindow;
 
@@ -22,7 +25,7 @@ public class Main extends Application {
 	//</editor-fold>
 
 	////// Game settings  /////////////
-
+	static boolean isAi = true;
 	static final byte WHITE = 0, BLACK = 1, NONE = 2;
 	static byte whoseMove = NONE;
 	static final String[] stateName = {"White", "Black", "None"};
@@ -147,13 +150,23 @@ public class Main extends Application {
 		return validTo;
 	}
 
-	private static void maybeAITurn() {
-		if (stateIsHuman[turn]) return;
-
-	}
 
 	private static void changeTurn() {
 		turn = opponent();
+
+		if(turn==WHITE && isAi==true) {
+
+			selectAiCell();
+
+			selectCell(getRow(),getCol());
+			click(getRow(),getCol());
+			whoseMove = WHITE;
+
+			makeMove();
+
+			click(getRow(),getCol());
+			turn = BLACK;
+		}
 	}
 
 
@@ -162,46 +175,44 @@ public class Main extends Application {
 
 		// normal click
 
+
 		// is this a move?
-		if(whoseMove != NONE) {
+		if (whoseMove != NONE) {
 			boolean[][] dest = destinations();
 
-			if(dest[row][col]==true || states[selectedRow][selectedCol] != whoseMove ) {
+			if (dest[row][col] == true && states[selectedRow][selectedCol] == whoseMove) {
 				states[selectedRow][selectedCol] = NONE;
 				states[row][col] = whoseMove;
+				whoseMove = NONE;
 				changeTurn();
+
 			}
-			whoseMove = NONE;
 
 			return;
 		}
 
 		// click on empty cell
-		if(states[row][col]==NONE) {
+		if (states[row][col] == NONE) {
 			return;
 		}
 
 
 		// click on white cell
-		if(states[row][col]==WHITE && turn==WHITE) {
+		if (states[row][col] == WHITE && turn == WHITE) {
 			whoseMove = WHITE;
-			selectCell(row,col);
+			selectCell(row, col);
 		}
 
 		// click on black cell
-		else if(states[row][col]==BLACK && turn==BLACK) {
+		else if (states[row][col] == BLACK && turn == BLACK) {
 			whoseMove = BLACK;
-			selectCell(row,col);
+			selectCell(row, col);
 		}
 
 		else return;
 
 
 
-		//if (!stateIsHuman[turn]) return;
-
-		//if (checkWin(turn)) win(turn);
-		//if (checkWin(opponent())) win(opponent());
 
 	}
 
@@ -240,7 +251,6 @@ public class Main extends Application {
 		gameWindow.setOnCloseRequest(e -> System.exit(1));
 		gameWindow.show();
 		setScene(gameWindow, "mainscene.fxml");
-		maybeAITurn();
 
 	}
 
