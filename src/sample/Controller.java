@@ -55,7 +55,7 @@ public class Controller {
 
 
 				if (selectedRow!=-1 && selectedCol!=-1) {
-					boolean[][] validTo = Main.destinations();
+					boolean[][] validTo = Main.destinations(states,selectedRow,selectedCol);
 
 					if (validTo[row][col]) {
 						addRectangle(row, col, Color.YELLOW);

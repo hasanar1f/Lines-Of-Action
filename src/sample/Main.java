@@ -8,8 +8,10 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 import static sample.Ai.*;
@@ -26,17 +28,18 @@ public class Main extends Application {
 
 	////// Game settings  /////////////
 	static boolean isAi = true;
+	static byte boardSize = 8; // or 10
 	static final byte WHITE = 0, BLACK = 1, NONE = 2;
 	static byte whoseMove = NONE;
 	static final String[] stateName = {"White", "Black", "None"};
 	static final Image[] stateImage = {white_piece, black_piece};
 	static boolean[] stateIsHuman = {true, false};
+	static   Move newMove;
 	/////////////////////////////
 
 	//<editor-fold defaultstate="collapsed" desc="GameState">
-	static byte boardSize = 10;
 	static byte turn = BLACK, selectedRow = -1, selectedCol = -1;
-	static byte[][] states = new byte[10][10]; // WHITE / BLACK / NONE, 0-based indexing, states[i][j] -> state of cell at row i, column j
+	static byte[][] states = new byte[boardSize][boardSize]; // WHITE / BLACK / NONE, 0-based indexing, states[i][j] -> state of cell at row i, column j
 	//</editor-fold>
 
 	static byte opponent() {
@@ -57,15 +60,67 @@ public class Main extends Application {
 		selectedCol = col;
 	}
 
-	private static boolean checkWin(byte player) {
-		// if checkWin(player) win(player);
+	private static boolean isAdj(Pair<Integer,Integer> one,Pair<Integer,Integer> two) {
+		if( (Math.abs(one.getKey()-two.getKey())<=1)&&(Math.abs(one.getValue()-two.getValue())<=1) )
+		{
+			System.out.println(one.getKey()+","+one.getValue()+" and "+two.getKey()+","+two.getValue()+" are adj");
+			return true;
+		}
+		else
+			return false;
+	}
 
-		return new Random().nextInt(10)==0;
+	private static boolean checkWin(byte player) {
+		ArrayList<Pair<Integer,Integer>> all = new ArrayList<>();
+		ArrayList<Pair<Integer,Integer>> connected = new ArrayList<>();
+		ArrayList<Pair<Integer,Integer>> temp = new ArrayList<>();
+		ArrayList<Pair<Integer,Integer>> temp2 = new ArrayList<>();
+
+		for(int i=0;i<boardSize;i++) {
+			for(int j=0;j<boardSize;j++) {
+				if(states[i][j]==player){
+					all.add( new Pair<>(i,j) );
+				}
+			}
+		}
+
+		int N = all.size();
+		if(all.size()==1) return true;
+
+		connected.add( all.get(0) );
+		all.remove(0);
+		temp = (ArrayList<Pair<Integer,Integer>>) all.clone();
+
+		for(int k=0;k<N;k++) {
+
+
+			for (Pair<Integer, Integer> con : connected) {
+
+				for (Pair<Integer, Integer> check : all) {
+					if (isAdj(con, check)) {
+						temp2.add(check);
+						temp.remove(check);
+					}
+				}
+				all = (ArrayList<Pair<Integer,Integer>>) temp.clone();
+
+			}
+
+			connected.addAll(temp2);
+			temp2.clear();
+
+		}
+
+		//System.out.println("connected "+stateName[player]+" : "+connected.size());
+
+		if(connected.size()==N) return true;
+		else return false;
+
 	}
 
 
 
-	static boolean[][] destinations() {
+	static boolean[][] destinations(byte[][] states,byte selectedRow,byte selectedCol) {
 		assert selectedRow!=-1 && selectedCol!=-1;
 		boolean[][] validTo = new boolean[boardSize][boardSize];
 
@@ -152,21 +207,24 @@ public class Main extends Application {
 
 
 	private static void changeTurn() {
+
+
+		if(checkWin(turn)==true)
+			win(turn);
+
 		turn = opponent();
 
 		if(turn==WHITE && isAi==true) {
 
-			selectAiCell();
-
-			selectCell(getRow(),getCol());
-			click(getRow(),getCol());
+			newMove = getRandomMove();
+			selectCell(newMove.first_row,newMove.first_col);
+			click(newMove.first_row,newMove.first_col);
 			whoseMove = WHITE;
+			click(newMove.sec_row,newMove.sec_col);
+			System.out.println(newMove.sec_row+" "+newMove.sec_col);
 
-			makeMove();
-
-			click(getRow(),getCol());
-			turn = BLACK;
 		}
+
 	}
 
 
@@ -178,7 +236,7 @@ public class Main extends Application {
 
 		// is this a move?
 		if (whoseMove != NONE) {
-			boolean[][] dest = destinations();
+			boolean[][] dest = destinations(states,selectedRow,selectedCol);
 
 			if (dest[row][col] == true && states[selectedRow][selectedCol] == whoseMove) {
 				states[selectedRow][selectedCol] = NONE;
@@ -239,14 +297,22 @@ public class Main extends Application {
 			assert finishedscene != null;
 			finishedscene.result.setText(stateName[player] + " won");
 		});
+
 	}
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		gameWindow = primaryStage;
-		gameWindow.setTitle("LOA");
-		gameWindow.setHeight(735);
-		gameWindow.setWidth(625);
+		if(boardSize==10) {
+			gameWindow.setTitle("LOA");
+			gameWindow.setHeight(735);
+			gameWindow.setWidth(625);
+		}
+		else {
+			gameWindow.setTitle("LOA");
+			gameWindow.setHeight(587);
+			gameWindow.setWidth(505);
+		}
 		gameWindow.setResizable(true);
 		gameWindow.setOnCloseRequest(e -> System.exit(1));
 		gameWindow.show();
